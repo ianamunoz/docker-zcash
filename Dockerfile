@@ -1,8 +1,4 @@
-FROM debian:jessie
-
-ENV	ZCASH_URL=https://github.com/zcash/zcash.git \
-	ZCASH_VERSION=v1.0.14 \
-	ZCASH_CONF=/home/zcash/.zcash/zcash.conf
+FROM debian:stretch
 
 RUN apt-get update
 
@@ -12,22 +8,26 @@ RUN apt-get -qqy install --no-install-recommends build-essential \
     libcurl3-dev libudev-dev m4 g++-multilib unzip git python zlib1g-dev \
     wget ca-certificates pwgen bsdmainutils curl
 
+ENV ZCASH_URL=https://github.com/zcash/zcash.git
+
 WORKDIR /src
 
 RUN git clone ${ZCASH_URL}
 
 WORKDIR /src/zcash
 
-RUN git checkout ${ZCASH_VERSION}
-
 RUN ./zcutil/fetch-params.sh
+
+ENV ZCASH_VERSION=v1.0.15 \
+    ZCASH_CONF=/home/zcash/.zcash/zcash.conf
+
+RUN git checkout ${ZCASH_VERSION}
 
 RUN ./zcutil/build.sh --disable-rust -j$(nproc)
 
 WORKDIR /src/zcash/src
 
 RUN /usr/bin/install -c zcash-tx zcashd zcash-cli zcash-gtest -t /usr/local/bin/ && \
-    rm -rf /src/zcash/ && \
     adduser --uid 1000 --system zcash && \
     mv /root/.zcash-params /home/zcash/ && \
     mkdir -p /home/zcash/.zcash/ && \
@@ -36,8 +36,8 @@ RUN /usr/bin/install -c zcash-tx zcashd zcash-cli zcash-gtest -t /usr/local/bin/
 
 USER zcash
 RUN echo "rpcuser=zcash" > ${ZCASH_CONF} && \
-	echo "rpcpassword=`pwgen 20 1`" >> ${ZCASH_CONF} && \
-	echo "addnode=mainnet.z.cash" >> ${ZCASH_CONF} && \
-	echo "Success"
+        echo "rpcpassword=`pwgen 20 1`" >> ${ZCASH_CONF} && \
+        echo "addnode=mainnet.z.cash" >> ${ZCASH_CONF} && \
+        echo "Success"
 
 VOLUME ["/home/zcash/.zcash"]
