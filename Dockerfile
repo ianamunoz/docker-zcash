@@ -37,7 +37,10 @@ RUN /usr/bin/install -c zcash-tx zcashd zcash-cli zcash-gtest -t /usr/local/bin/
 USER zcash
 RUN echo "rpcuser=zcash" > ${ZCASH_CONF} && \
         echo "rpcpassword=`pwgen 20 1`" >> ${ZCASH_CONF} && \
-        echo "addnode=mainnet.z.cash" >> ${ZCASH_CONF} && \
+        echo "addnode=testnet.z.cash" >> ${ZCASH_CONF} && \
+	echo 'equihashsolver=tromp' >> ${ZCASH_CONF} \
+	echo "genproclimit=-1" >> ${ZCASH_CONF} \
+        echo "gen=1" >> ${ZCASH_CONF} && \
         echo "Success"
 
 VOLUME ["/home/zcash/.zcash"]
