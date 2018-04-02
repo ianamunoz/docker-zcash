@@ -1,40 +1,44 @@
-# k0st/zcash
+# ianamunoz/docker-zcash
 
 Zcash inside docker
 
 Image is based on the [debian](https://hub.docker.com/_/debian/) base image
 
-## Docker image size
-
-[![Latest](https://badge.imagelayers.io/k0st/zcash.svg)](https://imagelayers.io/?images=k0st/zcash:latest 'latest')
-
 ## Docker image usage
 
 ```
-docker run [docker-options] k0st/zcash
+docker run [docker-options] ianamunoz/docker-zcash
 ```
 
 ## Examples
 
-Typical basic usage (start zcashd daemon): 
+Typical basic usage (start zcashd testnet daemon):
+  - Having your data directory in a named location will allow persistence between containers.
 
 ```
-docker run -it k0st/zcash zcashd
+mkdir -p ~/.zcash.testnet
+
+cat >~/.zcash.testnet/zcash.conf <<EOF
+addnode=testnet.z.cash
+rpcuser=username
+rpcpassword=$(head -c 32 /dev/urandom | base64)
+gen=0
+genproclimit=$(lscpu | sed -n '/^Core/p' | awk '{print $4}')
+equihashsolver=tromp
+EOF
+
+docker run -t -d --name zcashd_testnet \
+  -v ${HOME}/.zcash.testnet:/home/zcash/.zcash.testnet \
+  --restart=unless-stopped \
+  --user=$(id -u):$(id -g) \
+  -p 8233:8233 \
+  ianamunoz/docker-zcash
+
 ```
 
-Typical usage to mine:
+## Beta
+Helper script with common defaults set:
 
 ```
-docker run -it k0st/zcash zcashd -gen
+./run_zcash zcashd
 ```
-
-Typical usage to perform query:
-
-```
-docker run -d --name zcashcont k0st/zcash zcashd
-docker exec -u zcash zcashcont zcash-cli getbalance
-```
-
-### Todo
-- [ ] Perform more testing
-
