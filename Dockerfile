@@ -18,7 +18,7 @@ WORKDIR /src/zcash
 
 RUN ./zcutil/fetch-params.sh
 
-ENV ZCASH_VERSION=v1.0.15 \
+ENV ZCASH_VERSION=v1.1.0-rc1 \
     ZCASH_CONF=/home/zcash/.zcash/zcash.conf
 
 RUN git checkout ${ZCASH_VERSION}
