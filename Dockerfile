@@ -1,7 +1,6 @@
 FROM debian:jessie
 
 ENV	ZCASH_URL=https://github.com/zcash/zcash.git \
-	ZCASH_VERSION=v1.0.14 \
 	ZCASH_CONF=/home/zcash/.zcash/zcash.conf
 
 RUN apt-get update
@@ -13,24 +12,17 @@ RUN apt-get -qqy install --no-install-recommends build-essential \
     wget ca-certificates pwgen bsdmainutils curl
 
 WORKDIR /src
-
 RUN git clone ${ZCASH_URL}
 
 WORKDIR /src/zcash
-
-RUN git checkout ${ZCASH_VERSION}
-
-RUN ./zcutil/fetch-params.sh
-
-RUN ./zcutil/build.sh --disable-rust -j$(nproc)
+RUN ./zcutil/build.sh -j$(nproc)
 
 WORKDIR /src/zcash/src
-
 RUN /usr/bin/install -c zcash-tx zcashd zcash-cli zcash-gtest -t /usr/local/bin/ && \
     rm -rf /src/zcash/ && \
     adduser --uid 1000 --system zcash && \
-    mv /root/.zcash-params /home/zcash/ && \
     mkdir -p /home/zcash/.zcash/ && \
+    mkdir -p /home/zcash/.zcash-params/ && \
     chown -R zcash /home/zcash && \
     echo "Success"
 
