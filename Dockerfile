@@ -18,8 +18,10 @@ WORKDIR /src/zcash
 RUN ./zcutil/build.sh -j$(nproc)
 
 WORKDIR /src/zcash/src
-RUN /usr/bin/install -c zcash-tx zcashd zcash-cli zcash-gtest -t /usr/local/bin/ && \
+RUN /usr/bin/install -c zcash-tx zcashd zcash-cli zcash-gtest zcash-fetch-params -t /usr/local/bin/ && \
     rm -rf /src/zcash/ && \
+		rm -rf /root/.ccache && \
+		apt-get clean all -y && \
     adduser --uid 1000 --system zcash && \
     mkdir -p /home/zcash/.zcash/ && \
     mkdir -p /home/zcash/.zcash-params/ && \
