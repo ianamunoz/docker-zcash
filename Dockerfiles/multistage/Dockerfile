@@ -1,7 +1,7 @@
-FROM debian:jessie
+FROM debian:jessie AS builder
 
-ENV	ZCASH_URL=https://github.com/zcash/zcash.git \
-	ZCASH_CONF=/home/zcash/.zcash/zcash.conf
+ENV ZCASH_URL=https://github.com/zcash/zcash.git \
+    ZCASH_CONF=/home/zcash/.zcash/zcash.conf
 
 ARG TAG
 
@@ -21,11 +21,21 @@ RUN git checkout $TAG
 RUN ./zcutil/build.sh -j$(nproc)
 
 WORKDIR /src/zcash/src
-RUN /usr/bin/install -c zcash-tx zcashd zcash-cli zcash-gtest -t /usr/local/bin/ && \
-    rm -rf /src/zcash/ && \
-		rm -rf /root/.ccache && \
-		apt-get clean all -y && \
-    adduser --uid 1000 --system zcash && \
+RUN /usr/bin/install -c zcash-tx zcashd zcash-cli zcash-gtest -t /usr/bin/
+
+FROM debian:jessie
+
+ENV ZCASH_CONF=/home/zcash/.zcash/zcash.conf
+
+RUN apt-get update
+
+RUN apt-get install -y libgomp1
+
+RUN apt-get clean all -y
+
+COPY --from=builder /usr/bin/zcash-cli /usr/bin/zcashd /usr/bin/
+
+RUN adduser --uid 1000 --system zcash && \
     mkdir -p /home/zcash/.zcash/ && \
     mkdir -p /home/zcash/.zcash-params/ && \
     chown -R zcash /home/zcash && \
@@ -33,8 +43,8 @@ RUN /usr/bin/install -c zcash-tx zcashd zcash-cli zcash-gtest -t /usr/local/bin/
 
 USER zcash
 RUN echo "rpcuser=zcash" > ${ZCASH_CONF} && \
-	echo "rpcpassword=`pwgen 20 1`" >> ${ZCASH_CONF} && \
-	echo "addnode=mainnet.z.cash" >> ${ZCASH_CONF} && \
-	echo "Success"
+        echo "rpcpassword=`head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 ; echo ''`" >> ${ZCASH_CONF} && \
+        echo "addnode=mainnet.z.cash" >> ${ZCASH_CONF} && \
+        echo "Success"
 
 VOLUME ["/home/zcash/.zcash"]
